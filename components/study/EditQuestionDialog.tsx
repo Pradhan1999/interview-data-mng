@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownTextarea } from "@/components/paste/MarkdownTextarea";
 import { TagsInput } from "@/components/questions/TagsInput";
 import { FolderPicker } from "@/components/folders/FolderPicker";
 import { questionsApi } from "@/lib/api-client";
@@ -69,20 +69,18 @@ export function EditQuestionDialog({
         <div className="-mx-4 no-scrollbar max-h-[60vh] overflow-y-auto px-4 space-y-4">
           <div className="space-y-1.5">
             <Label>Question (Markdown)</Label>
-            <Textarea
+            <MarkdownTextarea
               value={q}
-              onChange={(e) => setQ(e.target.value)}
-              rows={5}
-              className="resize-none font-mono text-sm"
+              onChange={setQ}
+              editorClassName="min-h-[8rem] max-h-[40vh]"
             />
           </div>
           <div className="space-y-1.5">
             <Label>Answer (Markdown)</Label>
-            <Textarea
+            <MarkdownTextarea
               value={a}
-              onChange={(e) => setA(e.target.value)}
-              rows={8}
-              className="resize-none font-mono text-sm"
+              onChange={setA}
+              editorClassName="min-h-[12rem] max-h-[40vh]"
             />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

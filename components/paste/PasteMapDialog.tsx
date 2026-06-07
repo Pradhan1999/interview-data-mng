@@ -20,10 +20,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { FolderPicker } from "@/components/folders/FolderPicker";
 import { TagsInput } from "@/components/questions/TagsInput";
 import { StrategyPicker } from "./StrategyPicker";
+import { MarkdownTextarea } from "./MarkdownTextarea";
 import { PreviewTable } from "./PreviewTable";
 import {
   splitBlock,
@@ -235,13 +235,12 @@ export function PasteMapDialog({
                     </span>
                   </div>
                   <StrategyPicker value={qStrategy} onChange={setQStrategy} />
-                  <Textarea
+                  <MarkdownTextarea
                     value={qText}
-                    onChange={(e) => setQText(e.target.value)}
+                    onChange={setQText}
                     placeholder={
                       "1. What is a closure?\n2. Explain the event loop.\n…"
                     }
-                    className="min-h-[50vh] max-h-[50vh] resize-none font-mono text-lg"
                   />
                 </div>
                 <div className="flex flex-col gap-3">
@@ -252,13 +251,12 @@ export function PasteMapDialog({
                     </span>
                   </div>
                   <StrategyPicker value={aStrategy} onChange={setAStrategy} />
-                  <Textarea
+                  <MarkdownTextarea
                     value={aText}
-                    onChange={(e) => setAText(e.target.value)}
+                    onChange={setAText}
                     placeholder={
                       "1. A closure is a function with its scope.\n2. …"
                     }
-                    className="min-h-[50vh] max-h-[50vh] resize-none font-mono text-lg"
                   />
                 </div>
               </div>
