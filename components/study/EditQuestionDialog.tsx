@@ -60,10 +60,10 @@ export function EditQuestionDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
+        <DialogHeader className="border-b pb-3">
           <DialogTitle>Edit question</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+        <div className="-mx-4 no-scrollbar max-h-[60vh] overflow-y-auto px-4 space-y-4">
           <div className="space-y-1.5">
             <Label>Question (Markdown)</Label>
             <Textarea
