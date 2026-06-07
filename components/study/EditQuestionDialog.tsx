@@ -55,6 +55,9 @@ export function EditQuestionDialog({
       toast.error(e instanceof Error ? e.message : "Failed to save");
       setBusy(false);
     }
+    finally {
+      setBusy(false);
+    }
   }
 
   return (
