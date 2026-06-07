@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
 import { questionsApi } from "@/lib/api-client";
-import { findNode } from "@/lib/tree-utils";
+import { findNode, flattenTree } from "@/lib/tree-utils";
 import { StatusBadge } from "./StatusBadge";
 import { FilterBar } from "./FilterBar";
 import {
@@ -30,7 +30,7 @@ import {
   type QuestionListItem,
   type QuestionStatus,
 } from "@/types";
-import { Star, StarOff, Trash2 } from "lucide-react";
+import { Star, StarOff, Trash2, FolderInput } from "lucide-react";
 
 export function QuestionListPanel({
   filters,
@@ -61,6 +61,7 @@ export function QuestionListPanel({
   const [loadingMore, setLoadingMore] = useState(false);
 
   const folder = filters.folderId ? findNode(tree, filters.folderId) : null;
+  const flatFolders = flattenTree(tree);
 
   const load = useCallback(
     async (cursor?: string) => {
@@ -129,6 +130,26 @@ export function QuestionListPanel({
       }
     },
     [load, onMutated]
+  );
+
+  const moveQuestion = useCallback(
+    async (q: QuestionListItem, destFolderId: string) => {
+      if (q.folderId === destFolderId) return;
+      const destName = findNode(tree, destFolderId)?.name ?? "folder";
+      // Optimistically drop the row — it no longer belongs to this view when
+      // a single folder is in scope. The reload via onMutated reconciles the
+      // exact set (e.g. when "All questions" or subfolders are shown).
+      setItems((prev) => prev.filter((it) => it._id !== q._id));
+      try {
+        await questionsApi.update(q._id, { folderId: destFolderId });
+        toast.success(`Moved to “${destName}”`);
+        onMutated?.();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to move");
+        load();
+      }
+    },
+    [load, onMutated, tree]
   );
 
   const deleteQuestion = useCallback(
@@ -279,6 +300,24 @@ export function QuestionListPanel({
                               </ContextMenuRadioItem>
                             ))}
                           </ContextMenuRadioGroup>
+                        </ContextMenuSubContent>
+                      </ContextMenuSub>
+                      <ContextMenuSub>
+                        <ContextMenuSubTrigger>
+                          <FolderInput className="size-4" /> Move to folder
+                        </ContextMenuSubTrigger>
+                        <ContextMenuSubContent className="max-h-72 overflow-y-auto">
+                          {flatFolders.map((f) => (
+                            <ContextMenuItem
+                              key={f._id}
+                              disabled={f._id === q.folderId}
+                              onClick={() => moveQuestion(q, f._id)}
+                            >
+                              <span style={{ paddingLeft: f.depth * 12 }}>
+                                {f.name}
+                              </span>
+                            </ContextMenuItem>
+                          ))}
                         </ContextMenuSubContent>
                       </ContextMenuSub>
                       <ContextMenuSeparator />

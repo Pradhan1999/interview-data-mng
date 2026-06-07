@@ -9,6 +9,7 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  FolderInput,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import {
 import { MarkdownHtml } from "@/components/markdown/MarkdownHtml";
 import { AnswerReveal } from "./AnswerReveal";
 import { EditQuestionDialog } from "./EditQuestionDialog";
+import { MoveQuestionDialog } from "./MoveQuestionDialog";
 import { questionsApi, renderApi } from "@/lib/api-client";
 import { useKeyboardNav } from "@/hooks/useKeyboardNav";
 import {
@@ -109,6 +111,7 @@ function QuestionStudy({
   const [loading, setLoading] = useState(true);
   const [revealed, setRevealed] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [moving, setMoving] = useState(false);
 
   const loadDetail = useCallback(async (id: string) => {
     try {
@@ -216,6 +219,15 @@ function QuestionStudy({
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => setMoving(true)}
+            disabled={!detail}
+            aria-label="Move to folder"
+          >
+            <FolderInput className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setEditing(true)}
             disabled={!detail}
             aria-label="Edit"
@@ -302,19 +314,33 @@ function QuestionStudy({
       </ScrollArea>
 
       {detail && (
-        <EditQuestionDialog
-          key={detail._id}
-          open={editing}
-          onOpenChange={setEditing}
-          tree={tree}
-          question={detail}
-          onSaved={(updated) => {
-            setEditing(false);
-            setDetail(updated);
-            loadDetail(updated._id);
-            onChanged();
-          }}
-        />
+        <>
+          <EditQuestionDialog
+            key={detail._id}
+            open={editing}
+            onOpenChange={setEditing}
+            tree={tree}
+            question={detail}
+            onSaved={(updated) => {
+              setEditing(false);
+              setDetail(updated);
+              loadDetail(updated._id);
+              onChanged();
+            }}
+          />
+          <MoveQuestionDialog
+            key={`move-${detail._id}`}
+            open={moving}
+            onOpenChange={setMoving}
+            tree={tree}
+            question={detail}
+            onMoved={(updated) => {
+              setMoving(false);
+              setDetail(updated);
+              onChanged();
+            }}
+          />
+        </>
       )}
     </div>
   );
