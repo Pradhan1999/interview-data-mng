@@ -226,7 +226,7 @@ export function PasteMapDialog({
                   <Wand2 className="size-4" /> Auto-detect split
                 </Button>
               </div>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <Label>Questions</Label>

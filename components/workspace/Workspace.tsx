@@ -2,11 +2,14 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { FolderTree, ListChecks, BookOpen } from "lucide-react";
 import {
   ResizablePanel,
   ResizablePanelGroup,
   ResizableHandle,
 } from "@/components/ui/resizable";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { cn } from "@/lib/utils";
 import { foldersApi } from "@/lib/api-client";
 import type {
   FolderTreeNode,
@@ -28,6 +31,13 @@ export function Workspace({
 }: {
   initialTree: FolderTreeNode[];
 }) {
+  const isMobile = useIsMobile();
+  // On mobile the three panels become a single swappable view driven by a
+  // bottom tab bar; on desktop this is ignored and all three render at once.
+  const [mobileView, setMobileView] = useState<
+    "folders" | "questions" | "study"
+  >("questions");
+
   const [tree, setTree] = useState<FolderTreeNode[]>(initialTree);
   // Default to the first root folder if one exists.
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(
@@ -74,79 +84,154 @@ export function Workspace({
     [filters, selectedFolderId]
   );
 
+  const folderSidebar = (
+    <FolderSidebar
+      tree={tree}
+      selectedFolderId={selectedFolderId}
+      onSelectFolder={(id) => {
+        setSelectedFolderId(id);
+        setSelectedQuestion(null);
+        // On mobile, picking a folder reveals its questions.
+        setMobileView("questions");
+      }}
+      onRefreshTree={refreshTree}
+      onOpenPaste={() => setPasteOpen(true)}
+    />
+  );
+
+  const questionListPanel = (
+    <QuestionListPanel
+      key={`${selectedFolderId}-${listRefreshKey}`}
+      filters={effectiveFilters}
+      tree={tree}
+      selectedQuestionId={selectedQuestion?._id ?? null}
+      onSelectQuestion={(q) => {
+        setSelectedQuestion(q);
+        // On mobile, picking a question switches to the study view.
+        setMobileView("study");
+      }}
+      onFiltersChange={setFilters}
+      currentFilters={filters}
+      onItemsLoaded={setLoadedItems}
+      onMutated={(deletedId) => {
+        if (deletedId && selectedQuestion?._id === deletedId) {
+          setSelectedQuestion(null);
+        }
+        refreshTree();
+      }}
+    />
+  );
+
+  const studyPanel = (
+    <StudyPanel
+      tree={tree}
+      selected={selectedQuestion}
+      position={
+        selectedIndex >= 0
+          ? { index: selectedIndex, total: loadedItems.length }
+          : null
+      }
+      onPrev={goPrev}
+      onNext={goNext}
+      onChanged={() => {
+        refreshList();
+        refreshTree();
+      }}
+      onDeleted={() => {
+        setSelectedQuestion(null);
+        refreshList();
+        refreshTree();
+      }}
+    />
+  );
+
+  const pasteDialog = (
+    <PasteMapDialog
+      open={pasteOpen}
+      onOpenChange={setPasteOpen}
+      tree={tree}
+      defaultFolderId={selectedFolderId}
+      onSaved={() => {
+        refreshList();
+        refreshTree();
+      }}
+    />
+  );
+
+  // --- Mobile: a single active panel + bottom tab bar. ---
+  if (isMobile) {
+    const tabs = [
+      { id: "folders" as const, label: "Folders", icon: FolderTree },
+      { id: "questions" as const, label: "Questions", icon: ListChecks },
+      { id: "study" as const, label: "Study", icon: BookOpen },
+    ];
+    return (
+      <div className="flex h-dvh flex-col overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
+          {/* Keep all three mounted so list scroll position / loaded items and
+              study state survive tab switches; just show the active one. */}
+          <div className={cn("h-full", mobileView === "folders" ? "block" : "hidden")}>
+            {folderSidebar}
+          </div>
+          <div className={cn("h-full", mobileView === "questions" ? "block" : "hidden")}>
+            {questionListPanel}
+          </div>
+          <div className={cn("h-full", mobileView === "study" ? "block" : "hidden")}>
+            {studyPanel}
+          </div>
+        </div>
+
+        <nav className="flex shrink-0 items-stretch border-t bg-sidebar">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const active = mobileView === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setMobileView(tab.id)}
+                className={cn(
+                  "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
+                  active
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon className="size-5" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {pasteDialog}
+      </div>
+    );
+  }
+
+  // --- Desktop: the three-panel resizable workspace. ---
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <ResizablePanelGroup orientation="horizontal" className="flex-1">
         <ResizablePanel defaultSize="20" minSize="14" maxSize="32" className="min-w-0 overflow-hidden">
-          <FolderSidebar
-            tree={tree}
-            selectedFolderId={selectedFolderId}
-            onSelectFolder={(id) => {
-              setSelectedFolderId(id);
-              setSelectedQuestion(null);
-            }}
-            onRefreshTree={refreshTree}
-            onOpenPaste={() => setPasteOpen(true)}
-          />
+          {folderSidebar}
         </ResizablePanel>
 
         <ResizableHandle withHandle />
 
         <ResizablePanel defaultSize="42" minSize="28" className="min-w-0 overflow-hidden">
-          <QuestionListPanel
-            key={`${selectedFolderId}-${listRefreshKey}`}
-            filters={effectiveFilters}
-            tree={tree}
-            selectedQuestionId={selectedQuestion?._id ?? null}
-            onSelectQuestion={setSelectedQuestion}
-            onFiltersChange={setFilters}
-            currentFilters={filters}
-            onItemsLoaded={setLoadedItems}
-            onMutated={(deletedId) => {
-              if (deletedId && selectedQuestion?._id === deletedId) {
-                setSelectedQuestion(null);
-              }
-              refreshTree();
-            }}
-          />
+          {questionListPanel}
         </ResizablePanel>
 
         <ResizableHandle withHandle />
 
         <ResizablePanel defaultSize="38" minSize="24" className="min-w-0 overflow-hidden">
-          <StudyPanel
-            tree={tree}
-            selected={selectedQuestion}
-            position={
-              selectedIndex >= 0
-                ? { index: selectedIndex, total: loadedItems.length }
-                : null
-            }
-            onPrev={goPrev}
-            onNext={goNext}
-            onChanged={() => {
-              refreshList();
-              refreshTree();
-            }}
-            onDeleted={() => {
-              setSelectedQuestion(null);
-              refreshList();
-              refreshTree();
-            }}
-          />
+          {studyPanel}
         </ResizablePanel>
       </ResizablePanelGroup>
 
-      <PasteMapDialog
-        open={pasteOpen}
-        onOpenChange={setPasteOpen}
-        tree={tree}
-        defaultFolderId={selectedFolderId}
-        onSaved={() => {
-          refreshList();
-          refreshTree();
-        }}
-      />
+      {pasteDialog}
     </div>
   );
 }
