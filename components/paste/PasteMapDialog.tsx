@@ -206,7 +206,7 @@ export function PasteMapDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="-mx-4 no-scrollbar max-h-[80vh] overflow-y-auto px-4">
+        <div className="-mx-4 no-scrollbar max-h-[70dvh] overflow-y-auto px-4">
           {/* Step indicator */}
           <div className="flex items-center gap-2 border-b px-6 pb-3 text-xs">
             <StepChip active={step === "input"} done={step === "preview"} n={1}>

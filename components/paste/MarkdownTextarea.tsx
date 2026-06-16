@@ -29,7 +29,7 @@ export function MarkdownTextarea({
   onChange,
   placeholder,
   className,
-  editorClassName = "min-h-[50vh] max-h-[50vh]",
+  editorClassName = "min-h-[35vh] max-h-[40vh]",
 }: {
   value: string;
   onChange: (next: string) => void;

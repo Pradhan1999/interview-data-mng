@@ -91,7 +91,7 @@ export function PreviewTable({
             onChange={(e) => editCell(col, i, e.target.value)}
             rows={3}
             placeholder={missing ? "(missing — type or insert)" : ""}
-            className="resize-y border-0 bg-transparent font-mono text-xs shadow-none focus-visible:ring-0"
+            className="resize-y border-0 bg-transparent font-mono text-xs shadow-none focus-visible:ring-0 max-h-48"
           />
           <div className="flex items-center gap-0.5 border-t bg-muted/30 px-1 py-0.5 opacity-0 transition-opacity group-hover/cell:opacity-100 focus-within:opacity-100">
             <Button

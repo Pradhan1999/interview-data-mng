@@ -170,13 +170,13 @@ export function Workspace({
         <div className="min-h-0 flex-1 overflow-hidden">
           {/* Keep all three mounted so list scroll position / loaded items and
               study state survive tab switches; just show the active one. */}
-          <div className={cn("h-full", mobileView === "folders" ? "block" : "hidden")}>
+          <div className={cn("h-full overflow-y-auto", mobileView === "folders" ? "block" : "hidden")}>
             {folderSidebar}
           </div>
-          <div className={cn("h-full", mobileView === "questions" ? "block" : "hidden")}>
+          <div className={cn("h-full overflow-y-auto", mobileView === "questions" ? "block" : "hidden")}>
             {questionListPanel}
           </div>
-          <div className={cn("h-full", mobileView === "study" ? "block" : "hidden")}>
+          <div className={cn("h-full overflow-y-auto", mobileView === "study" ? "block" : "hidden")}>
             {studyPanel}
           </div>
         </div>
