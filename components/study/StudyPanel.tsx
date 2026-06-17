@@ -26,8 +26,11 @@ import { MarkdownHtml } from "@/components/markdown/MarkdownHtml";
 import { AnswerReveal } from "./AnswerReveal";
 import { EditQuestionDialog } from "./EditQuestionDialog";
 import { MoveQuestionDialog } from "./MoveQuestionDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { questionsApi, renderApi } from "@/lib/api-client";
 import { useKeyboardNav } from "@/hooks/useKeyboardNav";
+import { usePersistentBoolean } from "@/hooks/usePersistentBoolean";
 import {
   STATUS_LABELS,
   type FolderTreeNode,
@@ -57,6 +60,13 @@ export function StudyPanel({
   onChanged: () => void;
   onDeleted: () => void;
 } & StudyNavProps) {
+  // Persisted preference: reveal answers automatically when opening a question.
+  // Defaults to true (answers shown), remembered across sessions.
+  const [revealByDefault, setRevealByDefault] = usePersistentBoolean(
+    "study:revealByDefault",
+    true
+  );
+
   if (!selected) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 bg-background px-6 text-center text-sm text-muted-foreground">
@@ -87,6 +97,8 @@ export function StudyPanel({
       onNext={onNext}
       onChanged={onChanged}
       onDeleted={onDeleted}
+      revealByDefault={revealByDefault}
+      onRevealByDefaultChange={setRevealByDefault}
     />
   );
 }
@@ -99,17 +111,21 @@ function QuestionStudy({
   onNext,
   onChanged,
   onDeleted,
+  revealByDefault,
+  onRevealByDefaultChange,
 }: {
   tree: FolderTreeNode[];
   questionId: string;
   onChanged: () => void;
   onDeleted: () => void;
+  revealByDefault: boolean;
+  onRevealByDefaultChange: (value: boolean) => void;
 } & StudyNavProps) {
   const [detail, setDetail] = useState<QuestionDTO | null>(null);
   const [questionHtml, setQuestionHtml] = useState("");
   const [answerHtml, setAnswerHtml] = useState("");
   const [loading, setLoading] = useState(true);
-  const [revealed, setRevealed] = useState(false);
+  const [revealed, setRevealed] = useState(revealByDefault);
   const [editing, setEditing] = useState(false);
   const [moving, setMoving] = useState(false);
 
@@ -216,6 +232,22 @@ function QuestionStudy({
           </Button>
         </div>
         <div className="flex items-center gap-1">
+          <Label
+            htmlFor="reveal-by-default"
+            className="mr-1 flex cursor-pointer items-center gap-1.5 text-xs font-normal text-muted-foreground"
+          >
+            <Checkbox
+              id="reveal-by-default"
+              checked={revealByDefault}
+              onCheckedChange={(c) => {
+                const next = c === true;
+                onRevealByDefaultChange(next);
+                // Reflect the new default on the current question immediately.
+                setRevealed(next);
+              }}
+            />
+            Reveal all
+          </Label>
           <Button
             variant="ghost"
             size="icon"
