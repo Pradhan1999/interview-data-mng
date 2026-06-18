@@ -14,7 +14,7 @@ export type QuestionStatus = (typeof QUESTION_STATUSES)[number];
 export const STATUS_LABELS: Record<QuestionStatus, string> = {
   not_studied: "Not Studied",
   learning: "Learning",
-  mastered: "Mastered",
+  mastered: "Done",
 };
 
 /** A folder as returned by the API. */
