@@ -70,6 +70,7 @@ async function resolveFolderIds(
   if (!subtree) return [root];
   const descendants = await Folder.find({ ancestors: root })
     .select("_id")
+    .lean<{ _id: Types.ObjectId }[]>()
     .exec();
   return [root, ...descendants.map((d) => d._id)];
 }
@@ -115,12 +116,11 @@ export async function listQuestions(
   // --- Text search branch ---
   if (filters.q && filters.q.trim()) {
     const skip = filters.cursor ? Number(filters.cursor) || 0 : 0;
-    const query = { ...base, $text: { $search: filters.q.trim() } };
-    const docs = await Question.find(query, {
-      score: { $meta: "textScore" },
-    })
+    const re = new RegExp(filters.q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    const query = { ...base, $or: [{ title: re }, { question: re }, { tags: re }] };
+    const docs = await Question.find(query)
       .select(listProjection)
-      .sort({ score: { $meta: "textScore" } })
+      .sort({ order: 1, _id: 1 })
       .skip(skip)
       .limit(limit + 1)
       .lean<QuestionDoc[]>()

@@ -6,6 +6,15 @@ import { serializeFolder } from "./serialize";
 import { conflict, notFound, DataError } from "./errors";
 import type { FolderDTO, FolderTreeNode } from "@/types";
 
+declare global {
+  var _folderTreeCache: FolderTreeNode[] | null;
+}
+if (!("_folderTreeCache" in globalThis)) globalThis._folderTreeCache = null;
+
+function bustFolderCache() {
+  globalThis._folderTreeCache = null;
+}
+
 /** Lowercase slug for a single path segment. */
 function slug(name: string): string {
   return name
@@ -42,6 +51,8 @@ async function allFolders(): Promise<FolderDocument[]> {
 
 /** Build the full folder tree from a flat, path-sorted list. */
 export async function getFolderTree(): Promise<FolderTreeNode[]> {
+  if (globalThis._folderTreeCache) return globalThis._folderTreeCache;
+
   await dbConnect();
   const docs = await allFolders();
 
@@ -60,13 +71,13 @@ export async function getFolderTree(): Promise<FolderTreeNode[]> {
     }
   }
 
-  // Sort children alphabetically at every level.
   const sortRec = (nodes: FolderTreeNode[]) => {
     nodes.sort((a, b) => a.name.localeCompare(b.name));
     nodes.forEach((n) => sortRec(n.children));
   };
   sortRec(roots);
 
+  globalThis._folderTreeCache = roots;
   return roots;
 }
 
@@ -122,6 +133,7 @@ export async function createFolder(
       depth,
       path: buildPath(parentPath, name),
     });
+    bustFolderCache();
     return serializeFolder(doc);
   } catch (err) {
     asDuplicateConflict(err);
@@ -155,6 +167,7 @@ export async function renameFolder(
     await rewriteDescendantPaths(doc._id, oldPath, newPath);
   }
 
+  bustFolderCache();
   return serializeFolder(doc);
 }
 
@@ -232,6 +245,7 @@ export async function moveFolder(
     await d.save();
   }
 
+  bustFolderCache();
   return serializeFolder(doc);
 }
 
@@ -269,6 +283,7 @@ export async function deleteFolder(
   });
   const delF = await Folder.deleteMany({ _id: { $in: subtreeFolderIds } });
 
+  bustFolderCache();
   return {
     deletedFolders: delF.deletedCount ?? 0,
     deletedQuestions: delQ.deletedCount ?? 0,
