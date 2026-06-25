@@ -42,9 +42,13 @@ export async function dbConnect(): Promise<typeof mongoose> {
   if (!cached.promise) {
     cached.promise = mongoose
       .connect(MONGODB_URI as string, {
-        // We always await dbConnect() before querying, so buffering would only
-        // hide connection errors. Fail fast instead.
         bufferCommands: false,
+        // Serverless: each function instance only needs one connection.
+        // A larger pool wastes the handshake time and Atlas connection slots.
+        maxPoolSize: 1,
+        // Fail fast rather than hanging if Atlas is unreachable on cold start.
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000,
       })
       .then((m) => m);
   }
