@@ -30,7 +30,7 @@ import {
   type QuestionListItem,
   type QuestionStatus,
 } from "@/types";
-import { Star, StarOff, Trash2, FolderInput } from "lucide-react";
+import { Star, StarOff, Trash2, FolderInput, GripVertical } from "lucide-react";
 
 export function QuestionListPanel({
   filters,
@@ -59,9 +59,26 @@ export function QuestionListPanel({
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  // Drag-to-reorder state: the id being dragged + the insertion index (0..length).
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   const folder = filters.folderId ? findNode(tree, filters.folderId) : null;
   const flatFolders = flattenTree(tree);
+
+  // Manual ordering only makes sense on a single folder in its natural order —
+  // any filter/search shows a subset where "drop after X" would be ambiguous.
+  // Subtree mode is fine when the folder has no children (same result set).
+  const canReorder = Boolean(
+    filters.folderId &&
+      (!filters.subtree || folder?.children.length === 0) &&
+      !filters.status &&
+      filters.favorite === undefined &&
+      !filters.tags?.length &&
+      !filters.q &&
+      !filters.dateFrom &&
+      !filters.dateTo
+  );
 
   const load = useCallback(
     async (cursor?: string) => {
@@ -173,6 +190,38 @@ export function QuestionListPanel({
     [load, onMutated]
   );
 
+  // Drop the dragged row at `insertAt` (index in the current list, 0..length):
+  // reorder optimistically, then persist as "place after the new previous row".
+  const dropAt = useCallback(
+    (insertAt: number) => {
+      if (!dragId) return;
+      const fromIndex = items.findIndex((it) => it._id === dragId);
+      if (fromIndex === -1) return;
+      const toIndex = insertAt > fromIndex ? insertAt - 1 : insertAt;
+      if (toIndex === fromIndex) return;
+
+      const next = [...items];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      const afterId = toIndex === 0 ? null : next[toIndex - 1]._id;
+      setItems(next);
+      questionsApi
+        .reorder(moved._id, afterId)
+        .then((res) =>
+          setItems((prev) =>
+            prev.map((it) =>
+              it._id === res._id ? { ...it, order: res.order } : it
+            )
+          )
+        )
+        .catch((e) => {
+          toast.error(e instanceof Error ? e.message : "Failed to reorder");
+          load();
+        });
+    },
+    [dragId, items, load]
+  );
+
   return (
     <div className="flex h-full flex-col bg-background">
       <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-1">
@@ -222,22 +271,78 @@ export function QuestionListPanel({
             {items.map((q, i) => {
               const active = selectedQuestionId === q._id;
               return (
-                <li key={q._id}>
+                <li
+                  key={q._id}
+                  className="relative"
+                  onDragOver={
+                    canReorder
+                      ? (e) => {
+                          if (!dragId) return;
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const before =
+                            e.clientY < rect.top + rect.height / 2;
+                          setDropIndex(before ? i : i + 1);
+                        }
+                      : undefined
+                  }
+                  onDrop={
+                    canReorder
+                      ? (e) => {
+                          e.preventDefault();
+                          if (dropIndex !== null) dropAt(dropIndex);
+                          setDragId(null);
+                          setDropIndex(null);
+                        }
+                      : undefined
+                  }
+                >
+                  {dragId && dropIndex === i && (
+                    <span className="pointer-events-none absolute inset-x-1 top-0 z-10 h-0.5 -translate-y-px rounded-full bg-primary" />
+                  )}
+                  {dragId && i === items.length - 1 && dropIndex === items.length && (
+                    <span className="pointer-events-none absolute inset-x-1 bottom-0 z-10 h-0.5 translate-y-px rounded-full bg-primary" />
+                  )}
                   <ContextMenu>
                     <ContextMenuTrigger asChild>
                       <button
                         type="button"
+                        draggable={canReorder}
+                        onDragStart={
+                          canReorder
+                            ? (e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", q._id);
+                                setDragId(q._id);
+                              }
+                            : undefined
+                        }
+                        onDragEnd={
+                          canReorder
+                            ? () => {
+                                setDragId(null);
+                                setDropIndex(null);
+                              }
+                            : undefined
+                        }
                         onClick={() => onSelectQuestion(q)}
                         className={cn(
                           "group relative flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors",
-                          active ? "bg-accent" : "hover:bg-accent/50"
+                          active ? "bg-accent" : "hover:bg-accent/50",
+                          dragId === q._id && "opacity-40"
                         )}
                       >
                         {active && (
                           <span className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-primary" />
                         )}
-                        <span className="mt-0.5 w-5 shrink-0 text-sm tabular-nums text-muted-foreground/70">
-                          {i + 1}
+                        <span className="relative mt-0.5 w-5 shrink-0 text-sm tabular-nums text-muted-foreground/70">
+                          <span className={cn(canReorder && "group-hover:opacity-0")}>
+                            {i + 1}
+                          </span>
+                          {canReorder && (
+                            <GripVertical className="absolute left-0 top-1 size-4 cursor-grab opacity-0 group-hover:opacity-100" />
+                          )}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="line-clamp-2 text-sm font-medium leading-snug">

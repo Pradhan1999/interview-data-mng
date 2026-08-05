@@ -114,6 +114,12 @@ export const questionsApi = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
+  /** Place a question directly after another (afterId null = top of folder). */
+  reorder: (id: string, afterId: string | null) =>
+    request<QuestionDTO>(`/api/questions/${id}/reorder`, {
+      method: "PATCH",
+      body: JSON.stringify({ afterId }),
+    }),
   setFavorite: (id: string, favorite: boolean) =>
     request<QuestionDTO>(`/api/questions/${id}/favorite`, {
       method: "PATCH",

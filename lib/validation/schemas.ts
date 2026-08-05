@@ -53,6 +53,9 @@ export const updateQuestionSchema = z
   });
 
 export const statusUpdateSchema = z.object({ status: statusSchema });
+
+/** Place a question directly after another (null = top of the folder). */
+export const reorderQuestionSchema = z.object({ afterId: objectId.nullable() });
 export const favoriteUpdateSchema = z.object({ favorite: z.boolean() });
 
 /** The mapped paste-and-map bulk save. */

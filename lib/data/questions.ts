@@ -312,6 +312,97 @@ export async function updateQuestion(
   return serializeQuestion(doc);
 }
 
+/** Re-assign gap-spaced orders (1000, 2000, ...) to every question in a folder. */
+async function renumberFolder(folderId: Types.ObjectId): Promise<void> {
+  const docs = await Question.find({ folderId })
+    .sort({ order: 1, _id: 1 })
+    .select("_id")
+    .lean<{ _id: Types.ObjectId }[]>()
+    .exec();
+  if (!docs.length) return;
+  await Question.bulkWrite(
+    docs.map((d, i) => ({
+      updateOne: {
+        filter: { _id: d._id },
+        update: { $set: { order: (i + 1) * ORDER_GAP } },
+      },
+    }))
+  );
+}
+
+/**
+ * Compute the order value that places a question directly after `afterId`
+ * (null = at the top of the folder). Returns null when the gap between the
+ * two neighbors is exhausted and the folder needs renumbering first.
+ */
+async function computeOrderAfter(
+  folderId: Types.ObjectId,
+  afterId: string | null,
+  movingId: Types.ObjectId
+): Promise<number | null> {
+  if (afterId === null) {
+    const first = await Question.findOne({ folderId, _id: { $ne: movingId } })
+      .sort({ order: 1, _id: 1 })
+      .select("order")
+      .lean<{ order: number }>()
+      .exec();
+    return first ? first.order - ORDER_GAP : ORDER_GAP;
+  }
+
+  const anchor = await Question.findOne({ _id: afterId, folderId })
+    .select("order")
+    .lean<{ _id: Types.ObjectId; order: number }>()
+    .exec();
+  if (!anchor) throw notFound("Question");
+
+  // Next doc after the anchor in (order, _id) sort, skipping the moving doc.
+  const next = await Question.findOne({
+    folderId,
+    _id: { $ne: movingId },
+    $or: [
+      { order: { $gt: anchor.order } },
+      { order: anchor.order, _id: { $gt: anchor._id } },
+    ],
+  })
+    .sort({ order: 1, _id: 1 })
+    .select("order")
+    .lean<{ order: number }>()
+    .exec();
+
+  if (!next) return anchor.order + ORDER_GAP;
+  const mid = Math.floor((anchor.order + next.order) / 2);
+  return mid > anchor.order && mid < next.order ? mid : null;
+}
+
+/**
+ * Move a question within its folder so it sits directly after `afterId`
+ * (null = top). Uses the gap-spaced `order`; when the gap between the target
+ * neighbors is exhausted, renumbers the whole folder and retries.
+ */
+export async function reorderQuestion(
+  id: string,
+  afterId: string | null
+): Promise<QuestionDTO> {
+  await dbConnect();
+  if (!Types.ObjectId.isValid(id)) throw notFound("Question");
+  const doc = await Question.findById(id).exec();
+  if (!doc) throw notFound("Question");
+  if (afterId === id) return serializeQuestion(doc);
+
+  let order = await computeOrderAfter(doc.folderId, afterId, doc._id);
+  if (order === null) {
+    await renumberFolder(doc.folderId);
+    order = await computeOrderAfter(doc.folderId, afterId, doc._id);
+    if (order === null) throw notFound("Question");
+  }
+
+  // Explicit updateOne: after a renumber the in-memory doc.order is stale, so
+  // save() could see the new value as "unmodified" and skip the write.
+  await Question.updateOne({ _id: doc._id }, { $set: { order } });
+  doc.order = order;
+  return serializeQuestion(doc);
+}
+
 export async function setStatus(
   id: string,
   status: QuestionDTO["status"]
