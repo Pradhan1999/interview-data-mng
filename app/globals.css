@@ -205,3 +205,15 @@
 .dark .md pre span {
   color: var(--shiki-dark);
 }
+/* Difficult-word glossary highlights. Dotted amber underline; no background
+   override so the text color and code theme remain untouched. */
+.md mark.glossary-term {
+  background: none !important;
+  color: inherit !important;
+  font-weight: inherit !important;
+  text-decoration-line: underline !important;
+  text-decoration-style: dotted !important;
+  text-decoration-color: oklch(0.828 0.189 84.429) !important; /* amber-400 */
+  text-underline-offset: 3px !important;
+  cursor: help !important;
+}

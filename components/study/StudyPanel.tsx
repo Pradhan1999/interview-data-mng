@@ -340,6 +340,7 @@ function QuestionStudy({
               answerHtml={answerHtml}
               revealed={revealed}
               onToggle={() => setRevealed((v) => !v)}
+              difficultWords={detail.difficultWords ?? []}
             />
           </div>
         )}

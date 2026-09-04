@@ -50,6 +50,17 @@ const QuestionSchema = new Schema(
       type: String,
       default: "",
     },
+    // Difficult / technical words appearing in the answer, each with a short
+    // definition shown as a hover tooltip in the study view.
+    difficultWords: {
+      type: [
+        new Schema({
+          word: { type: String, required: true },
+          definition: { type: String, default: "" },
+        }),
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

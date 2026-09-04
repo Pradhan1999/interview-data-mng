@@ -48,10 +48,17 @@ export interface QuestionListItem {
   updatedAt: string;
 }
 
+/** A difficult / technical word with its hover-tooltip definition. */
+export interface DifficultWord {
+  word: string;
+  definition: string;
+}
+
 /** Full question detail (includes raw markdown bodies). */
 export interface QuestionDTO extends QuestionListItem {
   question: string;
   answer: string;
+  difficultWords: DifficultWord[];
 }
 
 /** Cursor-paginated list response. */

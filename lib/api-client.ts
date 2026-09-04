@@ -103,6 +103,7 @@ export const questionsApi = {
       favorite: boolean;
       folderId: string;
       order: number;
+      difficultWords: { word: string; definition: string }[];
     }>
   ) =>
     request<QuestionDTO>(`/api/questions/${id}`, {

@@ -30,12 +30,23 @@ const tagsSchema = z
   .max(50)
   .optional();
 
+const difficultWordSchema = z.object({
+  word: z.string().trim().min(1).max(200),
+  definition: z.string().max(2000).default(""),
+});
+
+const difficultWordsSchema = z
+  .array(difficultWordSchema)
+  .max(200)
+  .optional();
+
 export const createQuestionSchema = z.object({
   folderId: objectId,
   question: z.string().min(1, "Question is required"),
   answer: z.string().default(""),
   tags: tagsSchema,
   status: statusSchema.optional(),
+  difficultWords: difficultWordsSchema,
 });
 
 export const updateQuestionSchema = z
@@ -47,6 +58,7 @@ export const updateQuestionSchema = z
     favorite: z.boolean().optional(),
     folderId: objectId.optional(),
     order: z.number().optional(),
+    difficultWords: difficultWordsSchema,
   })
   .refine((v) => Object.keys(v).length > 0, {
     message: "No fields to update",

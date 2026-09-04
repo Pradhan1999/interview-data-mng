@@ -214,19 +214,19 @@ export function Workspace({
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <ResizablePanelGroup orientation="horizontal" className="flex-1">
-        <ResizablePanel defaultSize="20" minSize="14" maxSize="32" className="min-w-0 overflow-hidden">
+        <ResizablePanel defaultSize="17" minSize="14" maxSize="20" className="min-w-0 overflow-hidden">
           {folderSidebar}
         </ResizablePanel>
 
         <ResizableHandle withHandle />
 
-        <ResizablePanel defaultSize="42" minSize="28" className="min-w-0 overflow-hidden">
+        <ResizablePanel defaultSize="35" minSize="28" className="min-w-0 overflow-hidden">
           {questionListPanel}
         </ResizablePanel>
 
         <ResizableHandle withHandle />
 
-        <ResizablePanel defaultSize="38" minSize="24" className="min-w-0 overflow-hidden">
+        <ResizablePanel defaultSize="48" minSize="24" className="min-w-0 overflow-hidden">
           {studyPanel}
         </ResizablePanel>
       </ResizablePanelGroup>

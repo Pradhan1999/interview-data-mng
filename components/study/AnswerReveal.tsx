@@ -2,20 +2,24 @@
 
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MarkdownHtml } from "@/components/markdown/MarkdownHtml";
+import { AnswerWithGlossary } from "./AnswerWithGlossary";
+import type { DifficultWord } from "@/types";
 
 /**
  * Answer is hidden by default; clicking "Show Answer" (or pressing Space)
- * reveals the pre-rendered, highlighted markdown.
+ * reveals the pre-rendered, highlighted markdown. Difficult words are
+ * annotated with dotted underlines and a hover definition tooltip.
  */
 export function AnswerReveal({
   answerHtml,
   revealed,
   onToggle,
+  difficultWords,
 }: {
   answerHtml: string;
   revealed: boolean;
   onToggle: () => void;
+  difficultWords: DifficultWord[];
 }) {
   return (
     <div className="space-y-3">
@@ -38,7 +42,7 @@ export function AnswerReveal({
 
       {revealed ? (
         <div className="text-[15px]">
-          <MarkdownHtml html={answerHtml} />
+          <AnswerWithGlossary html={answerHtml} difficultWords={difficultWords} />
         </div>
       ) : (
         <button

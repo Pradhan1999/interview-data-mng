@@ -267,6 +267,7 @@ export async function updateQuestion(
     favorite?: boolean;
     folderId?: string;
     order?: number;
+    difficultWords?: { word: string; definition: string }[];
   }
 ): Promise<QuestionDTO> {
   await dbConnect();
@@ -286,6 +287,11 @@ export async function updateQuestion(
   if (patch.status !== undefined) doc.status = patch.status;
   if (patch.favorite !== undefined) doc.favorite = patch.favorite;
   if (patch.order !== undefined) doc.order = patch.order;
+  if (patch.difficultWords !== undefined) {
+    // Cast needed because Mongoose typed arrays don't accept plain objects directly
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    doc.difficultWords = patch.difficultWords as any;
+  }
 
   if (patch.folderId !== undefined && patch.folderId !== oldFolderId) {
     const newFolderId = new Types.ObjectId(patch.folderId);

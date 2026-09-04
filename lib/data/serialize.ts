@@ -33,6 +33,10 @@ export function serializeQuestion(doc: QuestionDoc): QuestionDTO {
     favorite: doc.favorite,
     tags: doc.tags ?? [],
     order: doc.order,
+    difficultWords: (doc.difficultWords ?? []).map((w) => ({
+      word: w.word,
+      definition: w.definition ?? "",
+    })),
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };

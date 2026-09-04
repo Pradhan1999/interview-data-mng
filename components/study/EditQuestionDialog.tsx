@@ -14,8 +14,9 @@ import { Label } from "@/components/ui/label";
 import { MarkdownTextarea } from "@/components/paste/MarkdownTextarea";
 import { TagsInput } from "@/components/questions/TagsInput";
 import { FolderPicker } from "@/components/folders/FolderPicker";
+import { DifficultWordsEditor } from "./DifficultWordsEditor";
 import { questionsApi } from "@/lib/api-client";
-import type { FolderTreeNode, QuestionDTO } from "@/types";
+import type { DifficultWord, FolderTreeNode, QuestionDTO } from "@/types";
 
 export function EditQuestionDialog({
   open,
@@ -34,6 +35,9 @@ export function EditQuestionDialog({
   const [a, setA] = useState(question.answer);
   const [tags, setTags] = useState<string[]>(question.tags);
   const [folderId, setFolderId] = useState<string | null>(question.folderId);
+  const [difficultWords, setDifficultWords] = useState<DifficultWord[]>(
+    question.difficultWords ?? []
+  );
   const [busy, setBusy] = useState(false);
 
   async function save() {
@@ -48,6 +52,7 @@ export function EditQuestionDialog({
         answer: a,
         tags,
         folderId: folderId ?? question.folderId,
+        difficultWords,
       });
       toast.success("Saved");
       onSaved(updated);
@@ -92,6 +97,17 @@ export function EditQuestionDialog({
               <Label>Tags</Label>
               <TagsInput tags={tags} onChange={setTags} />
             </div>
+          </div>
+          <div className="space-y-1.5 border-t pt-4">
+            <Label>Difficult Words / Definitions</Label>
+            <p className="text-[11px] text-muted-foreground">
+              Words highlighted with a dotted underline in the answer. Hover
+              shows the definition.
+            </p>
+            <DifficultWordsEditor
+              value={difficultWords}
+              onChange={setDifficultWords}
+            />
           </div>
         </div>
         <DialogFooter>
