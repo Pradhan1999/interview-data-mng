@@ -75,9 +75,7 @@ export function QuestionListPanel({
       !filters.status &&
       filters.favorite === undefined &&
       !filters.tags?.length &&
-      !filters.q &&
-      !filters.dateFrom &&
-      !filters.dateTo
+      !filters.q
   );
 
   const load = useCallback(

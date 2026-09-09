@@ -19,8 +19,6 @@ export async function GET(req: NextRequest) {
         ? sp.get("tags")!.split(",").map((t) => t.trim()).filter(Boolean)
         : undefined,
       q: sp.get("q") ?? undefined,
-      dateFrom: sp.get("dateFrom") ?? undefined,
-      dateTo: sp.get("dateTo") ?? undefined,
       cursor: sp.get("cursor") ?? undefined,
       limit: sp.get("limit") ? Number(sp.get("limit")) : undefined,
     };

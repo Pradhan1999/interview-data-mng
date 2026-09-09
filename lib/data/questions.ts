@@ -104,11 +104,6 @@ export async function listQuestions(
   if (filters.tags && filters.tags.length) {
     base.tags = { $all: normalizeTags(filters.tags) };
   }
-  if (filters.dateFrom || filters.dateTo) {
-    base.createdAt = {};
-    if (filters.dateFrom) base.createdAt.$gte = new Date(filters.dateFrom);
-    if (filters.dateTo) base.createdAt.$lte = new Date(filters.dateTo);
-  }
 
   const listProjection =
     "folderId title status favorite tags order createdAt updatedAt";

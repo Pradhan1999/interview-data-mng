@@ -69,8 +69,6 @@ function buildQuestionQuery(filters: QuestionListFilters): string {
     sp.set("favorite", String(filters.favorite));
   if (filters.tags?.length) sp.set("tags", filters.tags.join(","));
   if (filters.q) sp.set("q", filters.q);
-  if (filters.dateFrom) sp.set("dateFrom", filters.dateFrom);
-  if (filters.dateTo) sp.set("dateTo", filters.dateTo);
   if (filters.cursor) sp.set("cursor", filters.cursor);
   if (filters.limit) sp.set("limit", String(filters.limit));
   return sp.toString();

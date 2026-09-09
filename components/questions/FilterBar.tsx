@@ -37,9 +37,7 @@ export function FilterBar({
   const hasActiveFilters =
     Boolean(filters.q) ||
     Boolean(filters.status) ||
-    filters.favorite === true ||
-    Boolean(filters.dateFrom) ||
-    Boolean(filters.dateTo);
+    filters.favorite === true;
 
   return (
     <div className="flex flex-col gap-2.5 border-b px-4 py-3">
@@ -93,35 +91,6 @@ export function FilterBar({
           />
           Favorites
         </Toggle>
-
-        <Input
-          type="date"
-          value={filters.dateFrom?.slice(0, 10) ?? ""}
-          onChange={(e) =>
-            onChange({
-              ...filters,
-              dateFrom: e.target.value
-                ? new Date(e.target.value).toISOString()
-                : undefined,
-            })
-          }
-          className="h-8 w-36"
-          title="From date"
-        />
-        <Input
-          type="date"
-          value={filters.dateTo?.slice(0, 10) ?? ""}
-          onChange={(e) =>
-            onChange({
-              ...filters,
-              dateTo: e.target.value
-                ? new Date(e.target.value + "T23:59:59").toISOString()
-                : undefined,
-            })
-          }
-          className="h-8 w-36"
-          title="To date"
-        />
 
         {hasActiveFilters && (
           <Button

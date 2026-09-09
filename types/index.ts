@@ -82,8 +82,6 @@ export interface QuestionListFilters {
   favorite?: boolean;
   tags?: string[];
   q?: string;
-  dateFrom?: string;
-  dateTo?: string;
   cursor?: string;
   limit?: number;
 }
